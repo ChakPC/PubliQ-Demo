@@ -1,12 +1,4 @@
-'''
-
-API Key (v3 Auth): ac777706efca4c7b54b9bdb61b2e5f63
-API Read Access Token (v4 Auth) : eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhYzc3NzcwNmVmY2E0YzdiNTRiOWJkYjYxYjJlNWY2MyIsInN1YiI6IjYzZWNlMDQ3ZjkyNTMyMDBjMzAwMTJlYSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.Z58LZVwmGUJbbHXTdfDRsJIhxBCxRhJycNEnbkB1qc8
-
-'''
-
 import requests 
-import json
 import sys
 import mysql.connector
 import os
