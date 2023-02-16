@@ -6,13 +6,13 @@ from dotenv import load_dotenv
 
 # Load Environment Variables
 load_dotenv(dotenv_path='./config/.env')
+
 api_key = os.getenv("api_key")
 db_host = os.getenv("db_host")
 db_name = os.getenv("db_name")
 db_user = os.getenv("db_user")
 db_password = os.getenv("db_password")
 db_port = os.getenv("db_port")
-
 sql_files_path = "./SQL/"
 
 # Connect to database
@@ -62,11 +62,14 @@ def create_schema():
     cursor.execute("SHOW TABLES;")
     genre_table_present = 0
     movies_table_present = 0
+    relations_table_present = 0
     for (tables) in cursor:
         if tables[0] == "genres":
             genre_table_present = 1
-        if tables[0] == "movies_table_present":
+        if tables[0] == "movies":
             movies_table_present = 1
+        if tables[0] == "genre_movie_relation":
+            relations_table_present = 1
 
     # Create Genres table if not present
     if genre_table_present == 0:
@@ -78,22 +81,48 @@ def create_schema():
         print("Creating table for Movies")
         execute_sql_from_file(sql_files_path, "movies.sql")
 
+    # Create Genre-Movie relation table if not present
+    if relations_table_present == 0:
+        print("Creating table for Genre-Movie relation")
+        execute_sql_from_file(sql_files_path, "genre_movie_relation.sql")
 
-def fetch_data_from_api():
+def update_genres():
+    # Fetch all genres from API
     query = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + api_key + "&language=en-US"
     response =  requests.get(query)
+    new_genres_array = []
     if response.status_code == 200:    # API Hit Successful
-        array = response.json()
-        return array
+        genres_json = response.json()
+        for d in genres_json['genres']:
+            new_genres_array.append((d['id'], d['name']))
     else:                              # API Hit Unsuccessful 
         print("Invalid Request to API")
         sys.exit(1)
+    
+    # Fetch all present genres
+    cursor.execute("SELECT genre_id FROM genres;")
+    current_genres_array = cursor.fetchall()
+    current_genres_array = set(current_genres_array)
 
-def process_data(data):
+    # Add new genres to database
+    for (genre_id, genre) in new_genres_array:
+        if (genre_id,) not in current_genres_array:
+            print("Found new genre: ", genre)
+            current_genres_array.add((genre_id,))
+            command = "INSERT INTO genres VALUES (" + str(genre_id) + ",'" + str(genre) + "');"
+            cursor.execute(command)
+
+    # Commit changes to database
+    mydb.commit()
+
+    return current_genres_array
+
+def update_movies(genres):
     pass
 
-def update_database(processed_data):
-    pass
+def fetch_data_and_update_database():
+    genres = update_genres()
+    update_movies(genres)
 
 # Driver main function
 if __name__ == "__main__":
@@ -101,9 +130,5 @@ if __name__ == "__main__":
     create_and_use_database()
     create_schema()
 
-    # Fetch data from API and process it
-    data = fetch_data_from_api()
-    processed_data = process_data(data)
-
-    # Populate the database
-    update_database(processed_data)
+    # Fetch data from API and update database
+    fetch_data_and_update_database()
