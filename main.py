@@ -52,7 +52,6 @@ def execute_sql_from_file(path, file_name):
 
     for command in commands:
         try:
-            print("Executing command: ", command)
             cursor.execute(command)
         except:
             print("Error in executing command: ", command)
@@ -96,7 +95,7 @@ def update_genres():
         for d in genres_json['genres']:
             new_genres_array.append((d['id'], d['name']))
     else:                              # API Hit Unsuccessful 
-        print("Invalid Request to API")
+        print("Invalid request of genres to API")
         sys.exit(1)
     
     # Fetch all present genres
@@ -118,7 +117,43 @@ def update_genres():
     return current_genres_array
 
 def update_movies(genres):
-    pass
+    # Update movies genre-wise
+    for (genre_id,) in genres:
+        # Fetch new movies
+        print("Fetching movies of genre id: ", genre_id)
+        query = "https://api.themoviedb.org/3/discover/movie?api_key=" + str(api_key) + "&with_genres=" + str(genre_id)
+        response =  requests.get(query)
+        new_movies_array = []
+        if response.status_code == 200:    # API Hit Successful
+            movies_json = response.json()
+            for d in movies_json["results"]:
+                movie_id = d["id"]
+                movie_name = d["original_title"]
+                new_movies_array.append((movie_id, movie_name))
+        else:                              # API Hit Unsuccessful 
+            print("Invalid request of movies using genres to API")
+            sys.exit(1)
+
+        # Insert into database
+        for (movie_id, movie_name) in new_movies_array:
+            try:
+                # Insert into movies table
+                print("Found new movie: ", movie_name)
+                command = 'INSERT INTO movies VALUES (' + str(movie_id) + ',"' + str(movie_name) + '");'
+                cursor.execute(command)
+            except:
+                print("Movie already exists in database: ", movie_name)
+
+            try:
+                # Insert into genre-movie relation table
+                command = "INSERT INTO genre_movie_relation VALUES (" + str(genre_id) + "," + str(movie_id) + ");"
+                cursor.execute(command)
+            except:
+                pass
+
+    # Commit changes to database
+    mydb.commit()
+        
 
 def fetch_data_and_update_database():
     genres = update_genres()
