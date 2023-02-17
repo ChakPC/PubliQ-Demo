@@ -46,7 +46,7 @@ def create_and_use_database():
 
 def execute_sql_from_file(path, file_name):
     # Read commands from file
-    fd = open(path + file_name, 'r')
+    fd = open(path / file_name, 'r')
     sql_file = fd.read()
     fd.close()
     commands = sql_file.split(';')
@@ -139,9 +139,9 @@ def update_movies(genres):
         for (movie_id, movie_name) in new_movies_array:
             try:
                 # Insert into movies table
-                print("Found new movie: ", movie_name)
                 command = 'INSERT INTO movies VALUES (' + str(movie_id) + ',"' + str(movie_name) + '");'
                 cursor.execute(command)
+                print("Found new movie: ", movie_name)
             except:
                 print("Movie already exists in database: ", movie_name)
 
