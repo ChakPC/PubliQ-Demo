@@ -3,6 +3,7 @@ import sys
 import mysql.connector
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Load Environment Variables
 load_dotenv(dotenv_path='./config/.env')
@@ -13,7 +14,7 @@ db_name = os.getenv("db_name")
 db_user = os.getenv("db_user")
 db_password = os.getenv("db_password")
 db_port = os.getenv("db_port")
-sql_files_path = "./SQL/"
+sql_files_path = Path("./SQL/")
 
 # Connect to database
 mydb = mysql.connector.connect(
